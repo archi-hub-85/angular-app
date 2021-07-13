@@ -1,0 +1,25 @@
+.table {
+  width: 100%;
+}
+
+.mat-column-id {
+  border-right: 1px solid currentColor;
+  padding-right: 24px;
+  text-align: center;
+  width: 32px;
+}
+
+.mat-column-title {
+  padding-left: 16px;
+  text-align: left;
+}
+
+.mat-column-year {
+  text-align: center;
+  width: 50px;
+}
+
+.mat-column-author {
+  padding-left: 16px;
+  text-align: left;
+}
