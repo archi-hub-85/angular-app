@@ -1,0 +1,29 @@
+<h1 mat-dialog-title>Book {{book.title}}</h1>
+
+<form mat-dialog-content [formGroup]="form">
+
+  <mat-form-field appearance="fill">
+    <mat-label>Title</mat-label>
+    <input matInput type="text" formControlName="title" required>
+    <mat-error *ngIf="formControl('title').invalid">{{getErrorMessage('title')}}</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Year</mat-label>
+    <input matInput type="number" formControlName="year" required>
+    <mat-error *ngIf="formControl('year').invalid">{{getErrorMessage('year')}}</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Author</mat-label>
+    <!-- TODO Replace with mat-select -->
+    <input matInput type="text" formControlName="author" required>
+    <mat-error *ngIf="formControl('author').invalid">{{getErrorMessage('author')}}</mat-error>
+  </mat-form-field>
+
+</form>
+
+<div mat-dialog-actions>
+  <button mat-button (click)="onSave()" [disabled]="!form.valid || !form.dirty">Save</button>
+  <button mat-button (click)="onCancel()">Cancel</button>
+</div>
