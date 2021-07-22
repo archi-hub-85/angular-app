@@ -18,7 +18,8 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly displayedColumns: string[] = ['id', 'title', 'year', 'author', 'action'];
   dataSource = new MatTableDataSource<Book>();
-  private subscription: Subscription | undefined;
+  private refreshSub: Subscription | undefined;
+  private editSub: Subscription | undefined;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -38,15 +39,25 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.subscription = this.bookService.getBooks().subscribe(books => {
-        this.dataSource.data = books;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
-    });
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+
+    this.refreshBooks();
   }
 
   ngOnDestroy(): void {
-    this.subscription?.unsubscribe();
+    this.refreshSub?.unsubscribe();
+    this.editSub?.unsubscribe();
+  }
+
+  private refreshBooks(): void {
+    if (this.refreshSub != null) {
+      this.refreshSub.unsubscribe();
+    }
+
+    this.refreshSub = this.bookService.getBooks().subscribe(books => {
+      this.dataSource.data = books;
+    });
   }
 
   editBook(book: Book): void {
@@ -57,20 +68,15 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result != null) {
-        // TODO replace with the update request to bookService
-
-        const book = this.dataSource.data.find(value => {
-          return (value.id == result.id);
-        });
-
-        if (book != null) {
-          book.title = result.title;
-          book.year = result.year;
-          book.author.name = result.author.name;
+        if (this.editSub != null) {
+          this.editSub.unsubscribe();
         }
+
+        this.editSub = this.bookService.updateBook(result).subscribe(() => {
+          this.refreshBooks();
+        });
       }
     });
-    ;
   }
 
 }
