@@ -6,6 +6,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 
+import { BlockUIModule } from 'ng-block-ui';
+
 import { environment } from '../environments/environment';
 import { AppMaterialModule } from './app-material.module';
 import { AppRoutingModule } from './app-routing.module';
@@ -27,7 +29,8 @@ import { InMemoryBookService } from './in-memory-book-service/in-memory-book.ser
     BrowserAnimationsModule,
     HttpClientModule,
     environment.production ? [] : HttpClientInMemoryWebApiModule.forRoot(InMemoryBookService),
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    BlockUIModule.forRoot()
   ],
   providers: [],
   bootstrap: [AppComponent]

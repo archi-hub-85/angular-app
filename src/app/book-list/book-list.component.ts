@@ -3,7 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+
+import { BlockUI, NgBlockUI } from 'ng-block-ui';
 
 import { Author, Book } from '../dto';
 import { BookService } from '../book-service/book.service';
@@ -25,6 +28,8 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   private addSub: Subscription | undefined;
   private editSub: Subscription | undefined;
   private deleteSub: Subscription | undefined;
+
+  @BlockUI() blockUI!: NgBlockUI;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -58,10 +63,17 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
     safeUnsubscribe(this.deleteSub);
   }
 
+  private processWithBlock<T>(observable: Observable<T>, message: string): Observable<T> {
+    this.blockUI.start(message);
+    return observable.pipe(
+      finalize(() => this.blockUI.stop())
+    );
+  }
+
   private refreshAll(): void {
     safeUnsubscribe(this.authorsSub);
 
-    this.authorsSub = this.bookService.getAuthors().subscribe(authors => {
+    this.authorsSub = this.processWithBlock(this.bookService.getAuthors(), 'Loading authors...').subscribe(authors => {
       this.authors = authors;
 
       this.refreshBooks();
@@ -71,7 +83,7 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   private refreshBooks(): void {
     safeUnsubscribe(this.booksSub);
 
-    this.booksSub = this.bookService.getBooks().subscribe(books => {
+    this.booksSub = this.processWithBlock(this.bookService.getBooks(), 'Loading books...').subscribe(books => {
       this.dataSource.data = books;
     });
   }
@@ -90,7 +102,7 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
       if (result != null) {
         safeUnsubscribe(this.addSub);
 
-        this.addSub = this.bookService.addBook(result).subscribe(_ => {
+        this.addSub = this.processWithBlock(this.bookService.addBook(result), 'Adding book...').subscribe(_ => {
           this.refreshBooks();
         });
       }
@@ -111,7 +123,7 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
       if (result != null) {
         safeUnsubscribe(this.editSub);
 
-        this.editSub = this.bookService.updateBook(result).subscribe(_ => {
+        this.editSub = this.processWithBlock(this.bookService.updateBook(result), 'Updating book...').subscribe(_ => {
           this.refreshBooks();
         });
       }
@@ -122,7 +134,7 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
     if (confirm(`Are you sure to delete book "${book.title}"?`)) {
         safeUnsubscribe(this.deleteSub);
 
-        this.deleteSub = this.bookService.deleteBook(book.id).subscribe(_ => {
+        this.deleteSub = this.processWithBlock(this.bookService.deleteBook(book.id), 'Deleting book...').subscribe(_ => {
           this.refreshBooks();
         });
     }
