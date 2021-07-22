@@ -1,8 +1,8 @@
 import { Component, HostListener, Inject } from '@angular/core';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { Book } from '../dto';
+import { Author, Book } from '../dto';
 
 @Component({
   selector: 'app-book-editor',
@@ -11,16 +11,24 @@ import { Book } from '../dto';
 })
 export class BookEditorDialog {
 
-  form = this.fb.group({
-    title: [this.book.title, Validators.required],
-    year: [this.book.year, Validators.required],
-    author: [this.book.author.name, Validators.required]
-  });
+  authors: Author[];
+  book: Book;
+
+  form: FormGroup;
 
   constructor(
-      public dialogRef: MatDialogRef<BookEditorDialog>,
-      @Inject(MAT_DIALOG_DATA) public book: Book,
+      private dialogRef: MatDialogRef<BookEditorDialog>,
+      @Inject(MAT_DIALOG_DATA) data: any,
       private fb: FormBuilder) {
+    this.authors = data.authors;
+    this.book = data.book;
+
+    this.form = this.fb.group({
+      title: [this.book.title, Validators.required],
+      year: [this.book.year, Validators.required],
+      author: [this.book.author_id, Validators.required]
+    });
+
     dialogRef.disableClose = true;
   }
 
@@ -35,7 +43,7 @@ export class BookEditorDialog {
   onSave(): void {
     this.book.title = this.formControl('title').value;
     this.book.year = this.formControl('year').value;
-    this.book.author.name = this.formControl('author').value;
+    this.book.author_id = this.formControl('author').value;
 
     this.dialogRef.close(this.book);
   }

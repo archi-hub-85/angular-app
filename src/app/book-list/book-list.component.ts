@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Subscription } from 'rxjs';
 
-import { Book } from '../dto';
+import { Author, Book } from '../dto';
 import { BookService } from '../book-service/book.service';
 import { BookEditorDialog } from '../book-editor/book-editor.component';
 
@@ -17,7 +17,9 @@ import { BookEditorDialog } from '../book-editor/book-editor.component';
 export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly displayedColumns: string[] = ['id', 'title', 'year', 'author', 'action'];
+  private authors: Author[] = [];
   dataSource = new MatTableDataSource<Book>();
+  private authorsSub: Subscription | undefined;
   private refreshSub: Subscription | undefined;
   private editSub: Subscription | undefined;
 
@@ -30,9 +32,9 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.dataSource.sortingDataAccessor = (item, property) => {
+    this.dataSource.sortingDataAccessor = (item: Book, property: string) => {
       switch(property) {
-        case 'author': return item.author.name;
+        case 'author': return this.getAuthorName(item.author_id);
         default: return item[property];
       }
     }
@@ -42,12 +44,25 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
-    this.refreshBooks();
+    this.refreshAll();
   }
 
   ngOnDestroy(): void {
+    this.authorsSub?.unsubscribe();
     this.refreshSub?.unsubscribe();
     this.editSub?.unsubscribe();
+  }
+
+  private refreshAll(): void {
+    if (this.authorsSub != null) {
+      this.authorsSub.unsubscribe();
+    }
+
+    this.authorsSub = this.bookService.getAuthors().subscribe(authors => {
+      this.authors = authors;
+
+      this.refreshBooks();
+    });
   }
 
   private refreshBooks(): void {
@@ -63,7 +78,10 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   editBook(book: Book): void {
     const dialogRef = this.dialog.open(BookEditorDialog, {
       width: '250px',
-      data: book
+      data: {
+        authors: this.authors,
+        book
+      }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -77,6 +95,11 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       }
     });
+  }
+
+  getAuthorName(id: number): string | undefined {
+    let author = this.authors.find(author => author.id == id);
+    return author?.name;
   }
 
 }

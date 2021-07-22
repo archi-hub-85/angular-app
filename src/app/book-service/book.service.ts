@@ -3,14 +3,16 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
-import { Book } from '../dto';
+import { Author, Book } from '../dto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BookService {
 
-  private serviceUrl = 'api/books';
+  private baseUrl = 'api/';
+  private authorsUrl = this.baseUrl + 'authors';
+  private serviceUrl = this.baseUrl + 'books';
 
   private httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -19,6 +21,14 @@ export class BookService {
   constructor(
     private http: HttpClient
   ) { }
+
+  getAuthors(): Observable<Author[]> {
+    return this.http.get<Author[]>(this.authorsUrl)
+      .pipe(
+        tap(_ => this.log('fetched authors')),
+        catchError(this.handleError<Author[]>('getAuthors', []))
+      );
+  }
 
   getBooks(): Observable<Book[]> {
     return this.http.get<Book[]>(this.serviceUrl)

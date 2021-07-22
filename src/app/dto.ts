@@ -11,5 +11,5 @@ export interface Book extends Indexable {
   id: number;
   title: string;
   year: number;
-  author: Author;
+  author_id: number;
 }
