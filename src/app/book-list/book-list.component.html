@@ -2,6 +2,8 @@
 
 <div class="mat-elevation-z8">
 
+  <button mat-button (click)="addBook()">Add</button>
+
   <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 table">
 
     <!-- ID Column -->
@@ -32,7 +34,8 @@
     <ng-container matColumnDef="action">
       <th mat-header-cell *matHeaderCellDef>Action</th>
       <td mat-cell *matCellDef="let book">
-        <a [routerLink]="" (click)="editBook(book)">Edit</a>
+        <a [routerLink]="" (click)="editBook(book)">Edit</a> | 
+        <a [routerLink]="" (click)="deleteBook(book)">Delete</a>
       </td>
     </ng-container>
 

@@ -19,9 +19,12 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly displayedColumns: string[] = ['id', 'title', 'year', 'author', 'action'];
   private authors: Author[] = [];
   dataSource = new MatTableDataSource<Book>();
+
   private authorsSub: Subscription | undefined;
-  private refreshSub: Subscription | undefined;
+  private booksSub: Subscription | undefined;
+  private addSub: Subscription | undefined;
   private editSub: Subscription | undefined;
+  private deleteSub: Subscription | undefined;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -48,15 +51,15 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.authorsSub?.unsubscribe();
-    this.refreshSub?.unsubscribe();
-    this.editSub?.unsubscribe();
+    safeUnsubscribe(this.authorsSub);
+    safeUnsubscribe(this.booksSub);
+    safeUnsubscribe(this.editSub);
+    safeUnsubscribe(this.addSub);
+    safeUnsubscribe(this.deleteSub);
   }
 
   private refreshAll(): void {
-    if (this.authorsSub != null) {
-      this.authorsSub.unsubscribe();
-    }
+    safeUnsubscribe(this.authorsSub);
 
     this.authorsSub = this.bookService.getAuthors().subscribe(authors => {
       this.authors = authors;
@@ -66,19 +69,39 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private refreshBooks(): void {
-    if (this.refreshSub != null) {
-      this.refreshSub.unsubscribe();
-    }
+    safeUnsubscribe(this.booksSub);
 
-    this.refreshSub = this.bookService.getBooks().subscribe(books => {
+    this.booksSub = this.bookService.getBooks().subscribe(books => {
       this.dataSource.data = books;
+    });
+  }
+
+  addBook(): void {
+    const dialogRef = this.dialog.open(BookEditorDialog, {
+      width: '400px',
+      data: {
+        dialogTitle: 'Add book',
+        authors: this.authors,
+        book: {}
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result != null) {
+        safeUnsubscribe(this.addSub);
+
+        this.addSub = this.bookService.addBook(result).subscribe(_ => {
+          this.refreshBooks();
+        });
+      }
     });
   }
 
   editBook(book: Book): void {
     const dialogRef = this.dialog.open(BookEditorDialog, {
-      width: '250px',
+      width: '400px',
       data: {
+        dialogTitle: 'Edit book',
         authors: this.authors,
         book
       }
@@ -86,15 +109,23 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result != null) {
-        if (this.editSub != null) {
-          this.editSub.unsubscribe();
-        }
+        safeUnsubscribe(this.editSub);
 
-        this.editSub = this.bookService.updateBook(result).subscribe(() => {
+        this.editSub = this.bookService.updateBook(result).subscribe(_ => {
           this.refreshBooks();
         });
       }
     });
+  }
+
+  deleteBook(book: Book): void {
+    if (confirm(`Are you sure to delete book "${book.title}"?`)) {
+        safeUnsubscribe(this.deleteSub);
+
+        this.deleteSub = this.bookService.deleteBook(book.id).subscribe(_ => {
+          this.refreshBooks();
+        });
+    }
   }
 
   getAuthorName(id: number): string | undefined {
@@ -103,3 +134,9 @@ export class BookListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 }
+
+const safeUnsubscribe = function(subscription: Subscription | undefined): void {
+  if (subscription && !subscription.closed) {
+    subscription.unsubscribe();
+  }
+};

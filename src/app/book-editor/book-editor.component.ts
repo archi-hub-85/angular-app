@@ -11,6 +11,8 @@ import { Author, Book } from '../dto';
 })
 export class BookEditorDialog {
 
+  dialogTitle: string;
+
   authors: Author[];
   book: Book;
 
@@ -20,6 +22,7 @@ export class BookEditorDialog {
       private dialogRef: MatDialogRef<BookEditorDialog>,
       @Inject(MAT_DIALOG_DATA) data: any,
       private fb: FormBuilder) {
+    this.dialogTitle = data.dialogTitle;
     this.authors = data.authors;
     this.book = data.book;
 
