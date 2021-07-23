@@ -1,20 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
-import { BookEditorComponent } from './book-editor.component';
+import { BookEditorDialog } from './book-editor.component';
 
-describe('BookEditorComponent', () => {
-  let component: BookEditorComponent;
-  let fixture: ComponentFixture<BookEditorComponent>;
+describe('BookEditorDialog', () => {
+  let component: BookEditorDialog;
+  let fixture: ComponentFixture<BookEditorDialog>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BookEditorComponent ]
+      declarations: [ BookEditorDialog ],
+      providers: [
+        { provide: MatDialogRef, useValue: {} },
+        { provide: MAT_DIALOG_DATA,  useValue: { dialogTitle: '', authors: [], book: {} } },
+        FormBuilder
+      ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(BookEditorComponent);
+    fixture = TestBed.createComponent(BookEditorDialog);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

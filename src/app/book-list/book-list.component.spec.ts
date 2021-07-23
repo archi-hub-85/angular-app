@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientModule } from '@angular/common/http';
+import { MatDialog } from '@angular/material/dialog';
 
 import { BookListComponent } from './book-list.component';
 
@@ -8,7 +10,11 @@ describe('BookListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BookListComponent ]
+      declarations: [ BookListComponent ],
+      imports: [ HttpClientModule ],
+      providers: [
+        { provide: MatDialog, useValue: {} }
+      ]
     })
     .compileComponents();
   });
