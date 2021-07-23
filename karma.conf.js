@@ -37,7 +37,16 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['Chrome'],
+    browsers: ['ChromeHeadlessNoSandbox'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: "ChromeHeadless",
+        flags: [
+          "--no-sandbox", // required to run without privileges in docker
+          "--disable-gpu" // required on Windows (https://bugs.chromium.org/p/chromium/issues/detail?id=737678)
+        ]
+      },
+    },
     singleRun: false,
     restartOnFileChange: true
   });
