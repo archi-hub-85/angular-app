@@ -8,7 +8,8 @@ import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatPaginatorHarness } from '@angular/material/paginator/testing';
 import { MatSortHarness } from '@angular/material/sort/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
-import { of } from 'rxjs';
+import { asapScheduler, of } from 'rxjs';
+import { observeOn } from 'rxjs/operators';
 
 import { AppMaterialModule } from '../app-material.module';
 import { Author, Book } from '../dto';
@@ -49,7 +50,8 @@ describe('BookListComponent', () => {
 
   beforeEach(async () => {
     bookService = jasmine.createSpyObj('BookService', ['getAuthors', 'getBooks', 'addBook', 'updateBook', 'deleteBook']);
-    bookService.getAuthors.and.returnValue(of(authors));
+    // delay returning of values to prevent NG0100: ExpressionChangedAfterItHasBeenCheckedError
+    bookService.getAuthors.and.returnValue(of(authors).pipe(observeOn(asapScheduler)));
     getBooksSpy = bookService.getBooks.and.returnValue(of(books));
 
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']) as jasmine.SpyObj<MatDialogRef<any>>;
@@ -66,8 +68,9 @@ describe('BookListComponent', () => {
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(BookListComponent);
+    fixture.detectChanges();
     loader = TestbedHarnessEnvironment.loader(fixture);
     component = fixture.componentInstance;
     page = new Page(fixture, loader);
@@ -75,13 +78,7 @@ describe('BookListComponent', () => {
     blockUiStartSpy = spyOn(component.blockUI, 'start').and.callThrough();
     blockUiStopSpy = spyOn(component.blockUI, 'stop').and.callThrough();
 
-    component.ngOnInit();
-    component.ngAfterViewInit();
-    //fixture.detectChanges();
-  });
-
-  afterEach(() => {
-    component.ngOnDestroy();
+    await fixture.whenStable();
   });
 
   it('should create', () => {
@@ -123,13 +120,6 @@ describe('BookListComponent', () => {
       const cellTexts = await parallel(() => cells.map(cell => cell.getText()));
       expect(cellTexts)/*.withContext(`row[${index}].cellTexts`)*/.toEqual(bookTexts);
     }
-  });
-
-  it('should block UI on start', () => {
-    expect(blockUiStartSpy).withContext('BlockUI.start').toHaveBeenCalledTimes(2);
-    expect(blockUiStartSpy.calls.argsFor(0)).withContext('BlockUI.start(1)').toEqual(['Loading authors...']);
-    expect(blockUiStartSpy.calls.argsFor(1)).withContext('BlockUI.start(2)').toEqual(['Loading books...']);
-    expect(blockUiStopSpy).withContext('BlockUI.stop').toHaveBeenCalledTimes(2);
   });
 
   it('should add book', async () => {
