@@ -105,7 +105,7 @@ describe('BookListComponent', () => {
   it('should load books into table on start', async () => {
     const table = await page.table;
     const rows = await table.getRows();
-    expect(rows.length).withContext('rows.length').toEqual(5);
+    expect(rows.length).withContext('rows.length').toEqual(5); // pageSize
 
     for (const [index, row] of rows.entries()) {
       const book = books[index];
@@ -165,13 +165,18 @@ describe('BookListComponent', () => {
     const headers = await sort.getSortHeaders();
     expect(headers.length).withContext('headers.length').toEqual(4);
 
+    const bookFields = ['id', 'title', 'year', 'author'];
     for (const [index, header] of headers.entries()) {
+      const field = bookFields[index];
+      const bookTexts = books.map(book => '' + component.dataSource.sortingDataAccessor(book, field));
+      bookTexts.sort();
+
       await header.click();
       expect(await header.getSortDirection()).withContext(`header[${index}]`).toEqual('asc');
 
       let cellTexts = await table.getCellTextByIndex();
       let columnTexts = cellTexts.map(rowTexts => rowTexts[index]);
-      let sortedTexts = columnTexts.slice().sort();
+      let sortedTexts = bookTexts.slice(0, 5); // pageSize
       expect(columnTexts)/*.withContext(`column[${index}] texts`)*/.toEqual(sortedTexts);
 
       await header.click();
@@ -179,7 +184,7 @@ describe('BookListComponent', () => {
 
       cellTexts = await table.getCellTextByIndex();
       columnTexts = cellTexts.map(rowTexts => rowTexts[index]);
-      sortedTexts = columnTexts.slice().sort().reverse();
+      sortedTexts = bookTexts.reverse().slice(0, 5); // pageSize
       expect(columnTexts)/*.withContext(`column[${index}] texts (desc)`)*/.toEqual(sortedTexts);
     }
   });
