@@ -34,8 +34,8 @@
     <ng-container matColumnDef="action">
       <th mat-header-cell *matHeaderCellDef>Action</th>
       <td mat-cell *matCellDef="let book">
-        <a [routerLink]="" (click)="editBook(book)">Edit</a> | 
-        <a [routerLink]="" (click)="deleteBook(book)">Delete</a>
+        <a mat-button [routerLink]="" (click)="editBook(book)">Edit</a> | 
+        <a mat-button [routerLink]="" (click)="deleteBook(book)">Delete</a>
       </td>
     </ng-container>
 

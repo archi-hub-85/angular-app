@@ -7,7 +7,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatPaginatorHarness } from '@angular/material/paginator/testing';
 import { MatSortHarness } from '@angular/material/sort/testing';
-import { MatTableHarness } from '@angular/material/table/testing';
+import { MatCellHarness, MatTableHarness } from '@angular/material/table/testing';
 import { asapScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
 
@@ -136,27 +136,84 @@ describe('BookListComponent', () => {
     const addBtn = await page.addBtn;
     await addBtn.click();
 
-    expect(dialogOpenSpy).withContext('dialog.open').toHaveBeenCalledTimes(1);
+    expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
     const dialogArgs = dialogOpenSpy.calls.argsFor(0);
     expect(dialogArgs.length).withContext('dialog.open.args.length').toEqual(2);
-    expect(dialogArgs[1]?.data).withContext('dialog.config.data').toEqual({ dialogTitle: 'Add book', authors, book: {} });
+    expect(dialogArgs[1]?.data)/*.withContext('dialog.config.data')*/.toEqual({ dialogTitle: 'Add book', authors, book: {} });
 
-    expect(addBookSpy).withContext('bookService.addBook').toHaveBeenCalledOnceWith(newBook);
-    expect(getBooksSpy).withContext('bookService.getBooks').toHaveBeenCalledTimes(1);
+    expect(addBookSpy).toHaveBeenCalledOnceWith(newBook);
+    expect(getBooksSpy).toHaveBeenCalledTimes(1);
 
-    expect(blockUiStartSpy).withContext('BlockUI.start').toHaveBeenCalledTimes(2);
-    expect(blockUiStartSpy.calls.argsFor(0)).withContext('BlockUI.start(1)').toEqual(['Adding book...']);
-    expect(blockUiStartSpy.calls.argsFor(1)).withContext('BlockUI.start(2)').toEqual(['Loading books...']);
-    expect(blockUiStopSpy).withContext('BlockUI.stop').toHaveBeenCalledTimes(2);
+    expect(blockUiStartSpy).toHaveBeenCalledTimes(2);
+    expect(blockUiStartSpy.calls.argsFor(0))/*.withContext('BlockUI.start(1)')*/.toEqual(['Adding book...']);
+    expect(blockUiStartSpy.calls.argsFor(1))/*.withContext('BlockUI.start(2)')*/.toEqual(['Loading books...']);
+    expect(blockUiStopSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should edit book', async () => {
-    // TODO add implementation
+    const index = 0;
+    const book = books[index];
+    dialogRef.afterClosed.and.returnValue(of(book));
+
+    const updateBookSpy = bookService.updateBook.and.returnValue(of(book));
+    getBooksSpy.calls.reset();
+
+    blockUiStartSpy.calls.reset();
+    blockUiStopSpy.calls.reset();
+
+    const actionCell = await getActionCell(index);
+    const editBtn = await page.editBtn(actionCell);
+    await editBtn.click();
+
+    expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
+    const dialogArgs = dialogOpenSpy.calls.argsFor(0);
+    expect(dialogArgs.length).withContext('dialog.open.args.length').toEqual(2);
+    expect(dialogArgs[1]?.data)/*.withContext('dialog.config.data')*/.toEqual({ dialogTitle: 'Edit book', authors, book });
+
+    expect(updateBookSpy).toHaveBeenCalledOnceWith(book);
+    expect(getBooksSpy).toHaveBeenCalledTimes(1);
+
+    expect(blockUiStartSpy).toHaveBeenCalledTimes(2);
+    expect(blockUiStartSpy.calls.argsFor(0))/*.withContext('BlockUI.start(1)')*/.toEqual(['Updating book...']);
+    expect(blockUiStartSpy.calls.argsFor(1))/*.withContext('BlockUI.start(2)')*/.toEqual(['Loading books...']);
+    expect(blockUiStopSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should delete book', async () => {
-    // TODO add implementation
+    const index = 0;
+    const book = books[index];
+    const id = book.id;
+
+    const confirmSpy = spyOn(window, 'confirm').and.returnValue(true);
+    const deleteBookSpy = bookService.deleteBook.and.returnValue(of(book));
+    getBooksSpy.calls.reset();
+
+    blockUiStartSpy.calls.reset();
+    blockUiStopSpy.calls.reset();
+
+    const actionCell = await getActionCell(index);
+    const deleteBtn = await page.deleteBtn(actionCell);
+    await deleteBtn.click();
+
+    expect(confirmSpy).toHaveBeenCalledOnceWith(`Are you sure to delete book "${book.title}"?`);
+
+    expect(deleteBookSpy).toHaveBeenCalledOnceWith(id);
+    expect(getBooksSpy).toHaveBeenCalledTimes(1);
+
+    expect(blockUiStartSpy).toHaveBeenCalledTimes(2);
+    expect(blockUiStartSpy.calls.argsFor(0))/*.withContext('BlockUI.start(1)')*/.toEqual(['Deleting book...']);
+    expect(blockUiStartSpy.calls.argsFor(1))/*.withContext('BlockUI.start(2)')*/.toEqual(['Loading books...']);
+    expect(blockUiStopSpy).toHaveBeenCalledTimes(2);
   });
+
+  const getActionCell = async function (rowIndex: number) {
+    const table = await page.table;
+    const rows = await table.getRows();
+    expect(rows.length).withContext('rows.length').toBeGreaterThan(rowIndex);
+    const cells = await rows[rowIndex].getCells({ columnName: 'action' });
+    expect(cells.length).withContext('cells.length').toEqual(1);
+    return cells[0];
+  }
 
   it('should sort table', async () => {
     const table = await page.table;
@@ -216,6 +273,12 @@ class Page {
   }
   get table() {
     return this.loader.getHarness(MatTableHarness);
+  }
+  editBtn(actionCell: MatCellHarness) {
+    return actionCell.getHarness(MatButtonHarness.with({ text: 'Edit' }));
+  }
+  deleteBtn(actionCell: MatCellHarness) {
+    return actionCell.getHarness(MatButtonHarness.with({ text: 'Delete' }));
   }
   get sort() {
     return this.loader.getHarness(MatSortHarness);
