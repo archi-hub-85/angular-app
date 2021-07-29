@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HarnessLoader, parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -84,6 +84,24 @@ describe('BookListComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should unsubscribe on destroy', fakeAsync(() => {
+    getBooksSpy.and.returnValue(of([]).pipe(observeOn(asapScheduler)));
+    getBooksSpy.calls.reset();
+
+    component['refreshBooks']();
+    expect(getBooksSpy).toHaveBeenCalledTimes(1);
+
+    const booksSub = component['booksSub']!;
+    expect(booksSub.closed).withContext('booksSub.closed').toBeFalse();
+    const unsubscribeSpy = spyOn(booksSub, 'unsubscribe').and.callThrough();
+
+    component.ngOnDestroy();
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+
+    tick();
+    expect(component.dataSource.data).withContext('dataSource.data').toHaveSize(books.length);
+  }));
 
   it('should contain right title', () => {
     expect(page.componentTitle.textContent).toEqual('Books');
