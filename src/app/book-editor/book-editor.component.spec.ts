@@ -57,7 +57,7 @@ describe('BookEditorDialog', () => {
   });
 
   it('should set dialog data', () => {
-    expect(disableCloseSpy).withContext('dialogRef.disableClose').toHaveBeenCalledOnceWith(true);
+    expect(disableCloseSpy).toHaveBeenCalledOnceWith(true);
     expect(page.dialogTitle.textContent).withContext('dialogTitle').toEqual(dialogTitle);
   });
 
@@ -129,19 +129,19 @@ describe('BookEditorDialog', () => {
 
     const closeSpy = dialogRefSpy.close.and.callThrough();
     await (await page.saveBtn).click();
-    expect(closeSpy).withContext('dialogRef.close').toHaveBeenCalledOnceWith(updatedBook);
+    expect(closeSpy).toHaveBeenCalledOnceWith(updatedBook);
   });
 
   it('should close without data after \'Cancel\' button click', async () => {
     const closeSpy = dialogRefSpy.close.and.callThrough();
     await (await page.cancelBtn).click();
-    expect(closeSpy).withContext('dialogRef.close').toHaveBeenCalledOnceWith();
+    expect(closeSpy).toHaveBeenCalledOnceWith();
   });
 
   it('should close without data after \'Esc\' key click', () => {
     const closeSpy = dialogRefSpy.close.and.callThrough();
     window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape' }));
-    expect(closeSpy).withContext('dialogRef.close').toHaveBeenCalledOnceWith();
+    expect(closeSpy).toHaveBeenCalledOnceWith();
   });
 });
 
